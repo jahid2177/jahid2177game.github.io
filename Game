@@ -1,1 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Tic-Tac-Toe Challenge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --player-x-color: #ff5252;
+            --player-o-color: #448aff;
+            --winning-line-color: #4CAF50;
+            --text-color: #333;
+            --button-bg: #8e24aa;
+            --button-hover: #ab47bc;
+            --shadow-strong: rgba(0, 0, 0, 0.2);
+        }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            padding: 15px;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 500% 500%;
+            animation: animateBg 15s ease infinite;
+        }
+
+        @keyframes animateBg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            width: 100%;
+            /* === SCREEN SIZE INCREASED HERE === */
+            max-width: 500px; 
+            height: 150%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .screen {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px var(--shadow-strong);
+            padding: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            transition: opacity 0.5s, transform 0.5s, visibility 0.5s;
+        }
+
+        .hidden {
+            opacity: 0;
+            transform: scale(0.9);
+            visibility: hidden;
+            position: absolute;
+        }
+
+        h1, h2 {
+            font-family: 'Fredoka One', cursive;
+            color: #d81b60;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+        h1 { font-size: 2.5em; }
+        h2 { font-size: 2em; }
+
+        /* Player Setup Screen */
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-weight: 600; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ccc; font-size: 1em; }
+        
+        .action-button {
+            display: block; width: 100%; background-color: var(--button-bg); color: white;
+            border: none; border-radius: 15px; padding: 18px; font-size: 1.2em;
+            font-weight: 700; cursor: pointer; margin-top: 10px; transition: background-color 0.3s, transform 0.2s;
+        }
+        .action-button:hover { background-color: var(--button-hover); transform: translateY(-2px); }
+
+        /* Scoreboard */
+        .scoreboard {
+            display: flex; justify-content: space-around; margin-bottom: 20px; padding: 10px;
+            background-color: #f1f1f1; border-radius: 15px;
+        }
+        .score-player { font-weight: 700; font-size: 1.1em; }
+        .score-player .score { display: block; font-size: 1.5em; font-family: 'Fredoka One', cursive; }
+        #score-x { color: var(--player-x-color); }
+        #score-o { color: var(--player-o-color); }
+
+        .status { font-size: 1.4em; font-weight: 700; margin-bottom: 20px; min-height: 1.4em; }
+
+        .board {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            width: 100%; aspect-ratio: 1 / 1; margin: 0 auto 20px auto;
+            border-radius: 10px; background-color: #fff; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); position: relative;
+        }
+
+        .cell {
+            display: flex; justify-content: center; align-items: center;
+            font-family: 'Fredoka One', cursive; font-size: 15vmin;
+            cursor: pointer; border: 2px solid #f1f1f1; transition: background-color 0.2s;
+        }
+        .cell:hover:not(.x):not(.o) { background-color: #fdf1f5; }
+        .cell.x { color: var(--player-x-color); }
+        .cell.o { color: var(--player-o-color); }
+
+        .button-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        .game-button {
+            background-color: var(--button-bg); color: white; border: none; border-radius: 10px;
+            padding: 15px 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: background-color 0.3s, transform 0.2s;
+        }
+        .game-button.secondary { background-color: #78909c; }
+        .game-button:hover { transform: translateY(-2px); }
+        
+        .winning-line { position: absolute; background-color: var(--winning-line-color); z-index: 10; border-radius: 3px; }
+
+        /* ======================================= */
+        /* === FULL SCREEN FIT FOR MOBILE ======== */
+        /* ======================================= */
+        @media (max-width: 768px) and (max-height: 800px) {
+            body {
+                padding: 0;
+            }
+            .container {
+                max-width: 100%;
+                max-height: 100%;
+            }
+            .screen {
+                height: 100vh;
+                border-radius: 0;
+                box-shadow: none;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            #game-container {
+                justify-content: space-between;
+                padding: 20px 15px;
+            }
+            .board {
+                width: 100%;
+                max-width: calc(100vh - 300px); /* Adjust max size based on screen height */
+                max-height: calc(100vw - 30px); /* Adjust max size based on screen width */
+                margin-top: 15px;
+                margin-bottom: 15px;
+            }
+            h1, h2 {
+                margin-bottom: 15px;
+                flex-shrink: 0;
+            }
+            .scoreboard, .status, .button-container, #change-mode-button {
+                flex-shrink: 0; /* Prevent these from shrinking */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="screen" id="player-setup">
+            <h2>Enter Player Names</h2>
+            <div class="input-group">
+                <label for="player1-name">Player 1 (X)</label>
+                <input type="text" id="player1-name" value="Player 1" placeholder="Enter Player 1 Name">
+            </div>
+            <div class="input-group">
+                <label for="player2-name">Player 2 (O)</label>
+                <input type="text" id="player2-name" value="Player 2" placeholder="Enter Player 2 Name">
+            </div>
+            <button class="action-button" id="start-button">Start Game</button>
+        </div>
+
+        <div class="screen hidden" id="mode-selection">
+            <h2>Choose Game Mode</h2>
+            <button class="action-button" id="pva-button">Player vs AI</button>
+            <button class="action-button" id="pvp-button">Player vs Player</button>
+        </div>
+
+        <div class="screen hidden" id="game-container">
+            <div class="scoreboard">
+                <div class="score-player" id="score-x">
+                    <span id="player-x-name">Player 1</span>
+                    <span class="score" id="player-x-score">0</span>
+                </div>
+                <div class="score-player" id="score-o">
+                    <span id="player-o-name">Player 2</span>
+                    <span class="score" id="player-o-score">0</span>
+                </div>
+            </div>
+            <div class="status" id="game-status"></div>
+            <div class="board" id="game-board"></div>
+            <div class="button-container">
+                <button class="game-button secondary" id="reset-score-button">Reset Score</button>
+                <button class="game-button" id="reset-button">New Round</button>
+            </div>
+            <button class="action-button secondary" id="change-mode-button" style="margin-top: 10px; background-color: #78909c;">Change Mode</button>
+        </div>
+    </div>
+
+    <script>
+        // Screen elements
+        const playerSetup = document.getElementById('player-setup');
+        const modeSelection = document.getElementById('mode-selection');
+        const gameContainer = document.getElementById('game-container');
+
+        // Button elements
+        const startButton = document.getElementById('start-button');
+        const pvaButton = document.getElementById('pva-button');
+        const pvpButton = document.getElementById('pvp-button');
+        const changeModeButton = document.getElementById('change-mode-button');
+        const resetButton = document.getElementById('reset-button');
+        const resetScoreButton = document.getElementById('reset-score-button');
+
+        // Game elements
+        const statusDisplay = document.getElementById('game-status');
+        const boardElement = document.getElementById('game-board');
+        const playerXNameElem = document.getElementById('player-x-name');
+        const playerONameElem = document.getElementById('player-o-name');
+        const playerXScoreElem = document.getElementById('player-x-score');
+        const playerOScoreElem = document.getElementById('player-o-score');
+        
+        // Game state variables
+        let cells = [];
+        let gameBoard = [];
+        let currentPlayer;
+        let gameActive;
+        let gameMode;
+        let playerNames = { X: 'Player 1', O: 'Player 2' };
+        let score = { X: 0, O: 0 };
+
+        const winningConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6],
+            [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]
+        ];
+
+        function initializeGame() {
+            boardElement.innerHTML = '';
+            for(let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                cell.addEventListener('click', handleCellClick);
+                boardElement.appendChild(cell);
+            }
+            cells = document.querySelectorAll('.cell');
+            loadScore();
+            updateScoreboard();
+        }
+        
+        function showScreen(screenToShow) {
+            [playerSetup, modeSelection, gameContainer].forEach(screen => {
+                screen.classList.add('hidden');
+            });
+            screenToShow.classList.remove('hidden');
+        }
+
+        function startGame(mode) {
+            gameMode = mode;
+            if(mode === 'pva') {
+                playerNames.O = 'AI';
+            } else {
+                playerNames.O = document.getElementById('player2-name').value.trim() || 'Player 2';
+            }
+            updateScoreboard();
+            showScreen(gameContainer);
+            newRound();
+        }
+
+        function handleCellClick(event) {
+            const clickedCellIndex = parseInt(event.target.dataset.index);
+            if (gameBoard[clickedCellIndex] !== "" || !gameActive || (gameMode === 'pva' && currentPlayer === 'O')) return;
+
+            makeMove(clickedCellIndex);
+            if (gameActive) changePlayer();
+        }
+        
+        function makeMove(index) {
+            gameBoard[index] = currentPlayer;
+            cells[index].textContent = currentPlayer;
+            cells[index].classList.add(currentPlayer.toLowerCase());
+            handleResultValidation();
+        }
+
+        function handleResultValidation() {
+            let roundWon = false;
+            for (const winCondition of winningConditions) {
+                const [a, b, c] = winCondition;
+                if (gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
+                    roundWon = true;
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                statusDisplay.textContent = `${playerNames[currentPlayer]} Wins! 🎉`;
+                gameActive = false;
+                score[currentPlayer]++;
+                saveScore();
+                updateScoreboard();
+                return;
+            }
+
+            if (!gameBoard.includes("")) {
+                statusDisplay.textContent = "It's a Draw! 🤝";
+                gameActive = false;
+                return;
+            }
+        }
+
+        function changePlayer() {
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            
+            if (gameMode === 'pva' && currentPlayer === 'O') {
+                statusDisplay.textContent = "AI's Turn...";
+                setTimeout(aiMove, 700);
+            } else {
+                statusDisplay.textContent = `${playerNames[currentPlayer]}'s Turn (${currentPlayer})`;
+            }
+        }
+        
+        function aiMove() {
+            if (!gameActive) return;
+            let bestMove = -1;
+            // AI logic: 1. Win, 2. Block, 3. Center, 4. Random best
+            for (const player of ['O', 'X']) {
+                for (const cond of winningConditions) {
+                    const [a, b, c] = cond;
+                    if (gameBoard[a] === player && gameBoard[b] === player && gameBoard[c] === '') { bestMove = c; }
+                    if (gameBoard[a] === player && gameBoard[c] === player && gameBoard[b] === '') { bestMove = b; }
+                    if (gameBoard[b] === player && gameBoard[c] === player && gameBoard[a] === '') { bestMove = a; }
+                    if (bestMove !== -1) break;
+                }
+                if (bestMove !== -1) break;
+            }
+
+            if (bestMove === -1) {
+                const emptyCells = gameBoard.map((val, idx) => val === '' ? idx : null).filter(val => val !== null);
+                if (emptyCells.includes(4)) {
+                    bestMove = 4;
+                } else {
+                    const corners = [0, 2, 6, 8].filter(i => emptyCells.includes(i));
+                    if(corners.length > 0) {
+                        bestMove = corners[Math.floor(Math.random() * corners.length)];
+                    } else {
+                         bestMove = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                    }
+                }
+            }
+            
+            if (bestMove !== -1) {
+                makeMove(bestMove);
+                if (gameActive) changePlayer();
+            }
+        }
+
+        function newRound() {
+            gameBoard = ["", "", "", "", "", "", "", "", ""];
+            gameActive = true;
+            currentPlayer = "X";
+            statusDisplay.textContent = `${playerNames[currentPlayer]}'s Turn (X)`;
+            cells.forEach(cell => {
+                cell.textContent = "";
+                cell.classList.remove('x', 'o');
+            });
+        }
+        
+        function updateScoreboard() {
+            playerXNameElem.textContent = playerNames.X;
+            playerONameElem.textContent = playerNames.O;
+            playerXScoreElem.textContent = score.X;
+            playerOScoreElem.textContent = score.O;
+        }
+
+        function saveScore() {
+            localStorage.setItem('ticTacToeScore', JSON.stringify(score));
+        }
+
+        function loadScore() {
+            const savedScore = localStorage.getItem('ticTacToeScore');
+            if(savedScore) {
+                score = JSON.parse(savedScore);
+            }
+        }
+
+        function resetScore() {
+            score = { X: 0, O: 0 };
+            saveScore();
+            updateScoreboard();
+        }
+
+        // --- Event Listeners ---
+        startButton.addEventListener('click', () => {
+            playerNames.X = document.getElementById('player1-name').value.trim() || 'Player 1';
+            const player2Input = document.getElementById('player2-name');
+            playerNames.O = player2Input.value.trim() || 'Player 2';
+            showScreen(modeSelection);
+        });
+
+        pvaButton.addEventListener('click', () => startGame('pva'));
+        pvpButton.addEventListener('click', () => startGame('pvp'));
+        
+        changeModeButton.addEventListener('click', () => {
+            showScreen(playerSetup);
+        });
+
+        resetButton.addEventListener('click', newRound);
+        resetScoreButton.addEventListener('click', resetScore);
+
+        // --- Initial Load ---
+        initializeGame();
+        showScreen(playerSetup);
+    </script>
+</body>
+</html>
